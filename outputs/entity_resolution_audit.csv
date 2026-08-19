@@ -1,32 +1,52 @@
 type,left,right,similarity,decision
+Company,Jio,Reliance Jio,0.7891501188278198,REJECT_GUARD
 Technology,Logic Semiconductor Technology,Analog Semiconductor Technology,0.6730701923370361,MERGE_VECTOR
-Company,Information Services Group,Information technology services,0.6626009345054626,REJECT_GUARD
+Company,Information technology services,Information Services Group,0.6626009345054626,REJECT_GUARD
 Company,Amazon,Amazon Web Services,0.6469885110855103,REJECT_GUARD
-Technology,Healthcare information technology,Global Medical Information Services,0.6105117201805115,REJECT_GUARD
+Technology,AI,Generative AI,0.6410596370697021,REJECT_GUARD
+Technology,iPhone technology,iPhone 15,0.6139953136444092,REJECT_GUARD
+Technology,Global Medical Information Services,Healthcare information technology,0.6105117201805115,REJECT_GUARD
+Company,SITA,LeanTaaS,0.5990340709686279,REJECT_GUARD
 Company,Worldpay,IT World Canada,0.5735721588134766,REJECT_GUARD
 Company,Samsung Electronics Co. Ltd.,Ceinsys Tech Ltd,0.5655803680419922,REJECT_GUARD
+Technology,AI,Artificial Intelligence / Machine Learning technology,0.5637540817260742,REJECT_GUARD
+Company,Sysdig Inc.,Syxsense,0.5536189079284668,REJECT_GUARD
 Company,Motorola,Apple,0.5514997243881226,REJECT_GUARD
 Company,General Services Administration,Information Services Group,0.5430855751037598,REJECT_GUARD
-Company,Microsoft,Information technology services,0.5354074239730835,REJECT_GUARD
+Company,Information technology services,Microsoft,0.5354074239730835,REJECT_GUARD
+Company,Symrise AG,AGC Biologics,0.5226039886474609,REJECT_GUARD
+Company,Sysdig Inc.,Freshworks Inc.,0.5197317004203796,REJECT_GUARD
 Company,Freshworks Inc.,Inspire Brands Inc.,0.5123386979103088,REJECT_GUARD
 Company,Kansas City tech company,Ceinsys Tech Ltd,0.5110795497894287,REJECT_GUARD
 Company,Kansas City tech company,SIOS Technology Corp,0.5073939561843872,REJECT_GUARD
-Company,General Services Administration,Information technology services,0.5067863464355469,REJECT_GUARD
+Company,Information technology services,General Services Administration,0.5067863464355469,REJECT_GUARD
 Company,Kansas City tech company,Freshworks Inc.,0.5052997469902039,REJECT_GUARD
 Technology,Artificial Intelligence / Machine Learning technology,video game technology,0.5038477778434753,REJECT_GUARD
+Company,Symrise AG,Syxsense,0.4965243935585022,REJECT_GUARD
 Company,Apple,Microsoft,0.4928027391433716,REJECT_GUARD
+Company,Sysdig Inc.,Fiserv Inc.,0.49060752987861633,REJECT_GUARD
 Company,Amazon,Apple,0.48508578538894653,REJECT_GUARD
 Technology,Personal Cloud platform,Connected Vehicle Cloud,0.4837667942047119,REJECT_GUARD
+Company,Spyx,Syxsense,0.48346835374832153,REJECT_GUARD
 Company,Intelligent Technical Solutions,IFI Techsolutions,0.48308035731315613,REJECT_GUARD
-Company,Fidelity National Information Services,Information technology services,0.48296231031417847,REJECT_GUARD
+Company,Information technology services,Fidelity National Information Services,0.48296231031417847,REJECT_GUARD
 Company,Ceinsys Tech Ltd,Freshworks Inc.,0.48216360807418823,REJECT_GUARD
 Company,Samsung Electronics Co. Ltd.,Freshworks Inc.,0.47886645793914795,REJECT_GUARD
 Company,Cumulus Technology Services Inc.,Ceinsys Tech Ltd,0.4785311818122864,REJECT_GUARD
+Company,Telstra Broadcast Services,Aeris Communications,0.4776339828968048,REJECT_GUARD
 Technology,VIP Business Communications Platform,AI-powered Customer Service Suite,0.477464884519577,REJECT_GUARD
+Technology,dynamic platform,Personal Cloud platform,0.47594594955444336,REJECT_GUARD
 Company,Altitude Angel,Orion Hiya,0.47467514872550964,REJECT_GUARD
 Company,Renovus,Polso,0.47313886880874634,REJECT_GUARD
+Company,Information technology services,ServiceNow,0.47111180424690247,REJECT_GUARD
 Technology,Healthcare information technology,Artificial Intelligence / Machine Learning technology,0.47035109996795654,REJECT_GUARD
 Company,Syxsense,Synopsys,0.46867865324020386,REJECT_GUARD
+Technology,AI,AI-powered Customer Service Suite,0.4679306745529175,REJECT_GUARD
+Company,Sysdig Inc.,Symrise AG,0.46672189235687256,REJECT_GUARD
+Technology,AI,drones,0.46282440423965454,REJECT_GUARD
 Company,Fiserv Inc.,Freshworks Inc.,0.4622914791107178,REJECT_GUARD
 Technology,Managed IoT Connectivity Services,IoT Accelerator,0.45781540870666504,REJECT_GUARD
 Technology,blockchain technology,Logic Semiconductor Technology,0.4567077159881592,REJECT_GUARD
+Company,Swedencare AB,Ericsson,0.45208409428596497,REJECT_GUARD
+Company,SigenStor,SIOS Technology Corp,0.45069748163223267,REJECT_GUARD
+Company,Sysdig Inc.,Samsung Electronics Co. Ltd.,0.4502580165863037,REJECT_GUARD
