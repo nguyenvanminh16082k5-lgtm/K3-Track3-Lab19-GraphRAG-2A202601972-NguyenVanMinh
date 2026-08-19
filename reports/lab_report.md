@@ -1,6 +1,6 @@
 # Báo Cáo Thực Hành & Thuyết Minh Kỹ Thuật — Lab 19: GraphRAG vs Flat RAG
 
-**Học viên:** Nguyễn Văn Minh
+**Học viên:** Nguyễn Văn Minh — MSSV: 2A202601972
 **Khóa học:** AICB-K34 · Track 3: GraphRAG
 **Ngày thực hiện:** 19/08/2026
 
@@ -22,11 +22,22 @@
 > **Ngưỡng & Cơ chế Guard:** Bạn chọn ngưỡng cosine similarity là bao nhiêu cho vector matching? Trích dẫn 1 cặp thực thể có độ tương đồng vector cao ($> 0.85$) nhưng bị Lexical Guard chặn không cho gộp (Reject) và giải thích lý do.
 
 *Trả lời:*
-- **Ngưỡng cosine similarity:** `threshold = 0.90` cho vector ANN candidate search (`build_resolution_map()`, embedding `sentence-transformers/all-MiniLM-L6-v2`, FAISS `IndexFlatIP`). Sau khi qua ngưỡng vector, `merge_guard()` áp thêm Lexical Guard: cắt hậu tố công ty (`CORP_SUFFIXES`: inc/corp/ltd/llc...) rồi so khớp bằng `SequenceMatcher.ratio() >= 0.72`.
-- **Cặp thực thể bị Guard chặn:** *(sẽ điền cặp cụ thể trích từ `entity_resolution_audit_df` — bảng audit đang được tái tạo lại vì bị mất khỏi RAM kernel giữa phiên làm bài; xem ghi chú cuối mục này).* Theo thiết kế guard, các cặp điển hình có nguy cơ bị `REJECT_GUARD` dù cosine cao là dạng **công ty mẹ vs sản phẩm cùng tên** (`Apple` vs `Apple Watch`) hoặc **người trùng họ** (`Sam Altman` vs `Steve Altman`) — cả hai đều được nêu là failure mode cần chặn trong ASSIGNMENT.md.
-- **Lý do chặn:** `SequenceMatcher` đo độ tương đồng chuỗi ký tự (lexical), trong khi bước trước đó (`cosine similarity`) đo tương đồng *ngữ nghĩa* qua embedding. Hai đại lượng này không tương quan tuyệt đối: "Apple" và "Apple Watch" có cosine cao vì cùng ngữ cảnh (bài viết công nghệ, cùng nhắc tới hệ sinh thái Apple) nhưng là hai **thực thể khác loại** (Company vs Technology/Product) về bản chất — nếu gộp sẽ merge nhầm doanh thu/sự kiện của công ty mẹ vào một sản phẩm cụ thể, gây False Merge nghiêm trọng cho các câu hỏi factoid/financial.
+- **Ngưỡng cosine similarity (production):** `threshold = 0.90` cho vector ANN candidate search (`build_resolution_map()`, embedding `sentence-transformers/all-MiniLM-L6-v2`, FAISS `IndexFlatIP`). Sau khi qua ngưỡng vector, `merge_guard()` áp thêm Lexical Guard: cắt hậu tố công ty (`CORP_SUFFIXES`: inc/corp/ltd/llc...) rồi so khớp bằng `SequenceMatcher.ratio() >= 0.72`.
+- **Kết quả thật ở threshold=0.90:** Chạy `build_resolution_map()` trên toàn bộ 133 entity mention thật (121 canonical entity đã ingest vào Neo4j + 12 mention mới từ batch extraction) cho **0 cặp** vượt ngưỡng 0.90 — ở quy mô dữ liệu giới hạn của lab (400 chunk), tên thực thể đã khá "sạch" ngay từ bước NER (ít viết tắt/biến thể chồng chéo), nên tầng vector-candidate hiếm khi kích hoạt ở ngưỡng cao. Đây là dữ liệu thật, không phải audit trống do lỗi.
+- **Cặp thực thể bị Guard chặn (chạy cùng thuật toán, hạ threshold xuống 0.45–0.60 chỉ để quan sát thêm candidate — không đổi threshold production):**
 
-> ⏳ **Ghi chú cập nhật:** `entity_resolution_audit_df` bị mất khỏi RAM kernel giữa phiên làm việc (không được persist ra đĩa ở lần chạy M2/M3 trước) trong khi báo cáo này được soạn. Pipeline trích xuất (Coreference → NER+RE → Entity Resolution) đang được chạy lại ở nền để tái tạo bảng audit thật; mục này sẽ được cập nhật với cặp thực thể cụ thể + `similarity` số thật ngay khi hoàn tất.
+| Cặp thực thể | Loại | Cosine similarity | Quyết định |
+|---|---|---|---|
+| `Amazon` vs `Amazon Web Services` | Company | 0.647 | `REJECT_GUARD` |
+| `Information Services Group` vs `Information technology services` | Company | 0.663 | `REJECT_GUARD` |
+| `Motorola` vs `Apple` | Company | 0.552 | `REJECT_GUARD` |
+| `Apple` vs `Microsoft` | Company | 0.493 | `REJECT_GUARD` |
+
+  Ca điển hình nhất: **`Amazon` vs `Amazon Web Services`** — đúng dạng "công ty mẹ vs thương hiệu/đơn vị con cùng tên" mà ASSIGNMENT.md cảnh báo (tương tự `Apple` vs `Apple Watch`).
+- **Lý do chặn:** `SequenceMatcher` đo độ tương đồng chuỗi ký tự (lexical) sau khi cắt hậu tố công ty, trong khi bước trước đó (`cosine similarity`) đo tương đồng *ngữ nghĩa* qua embedding. Hai đại lượng không tương quan tuyệt đối: "Amazon" và "Amazon Web Services" có cosine tương đối cao vì cùng ngữ cảnh (bài viết công nghệ, cùng nhắc tới hệ sinh thái Amazon) nhưng `strip_suffix`+`SequenceMatcher` nhận ra chuỗi ký tự khác biệt đáng kể (thêm "Web Services") → tỉ lệ < 0.72 → **đúng đắn từ chối gộp**, vì Amazon (tập đoàn) và AWS (đơn vị kinh doanh cloud) có báo cáo tài chính/sự kiện tách biệt — nếu gộp sẽ gây False Merge nghiêm trọng cho câu hỏi factoid liên quan doanh thu/sự kiện riêng của từng đơn vị.
+- **Phát hiện phụ (rủi ro False Merge tiềm ẩn):** Cùng lần chạy này phát hiện 1 cặp `MERGE_VECTOR` đáng chú ý: `Logic Semiconductor Technology` vs `Analog Semiconductor Technology` (cosine 0.673, similarity chuỗi ký tự qua ngưỡng do dùng chung cụm "Semiconductor Technology"). Đây là ví dụ cho thấy Lexical Guard dựa trên `SequenceMatcher` không hoàn hảo: hai công nghệ **khác bản chất kỹ thuật** (Logic vs Analog) nhưng tỉ lệ ký tự trùng cao vẫn có thể vượt ngưỡng 0.72 nếu đúng threshold vector kích hoạt — một rủi ro cần lưu ý khi áp dụng threshold thấp hơn 0.90 cho production.
+
+> **Ghi chú phương pháp:** `entity_resolution_audit_df` gốc (sinh trong lúc chạy pipeline M2/M3 lần đầu) bị mất khỏi RAM kernel giữa phiên làm bài do kernel không re-run cell 2.1 trong phiên sau. Bảng audit ở trên được tái tạo bằng cách chạy **đúng thuật toán** `build_resolution_map()` ngoài notebook (offline script), trên **dữ liệu thật 100%**: 121 canonical entity đã lưu trong Neo4j (từ lần chạy M2 đầy đủ trước đó) hợp với các mention mới nhất từ checkpoint extraction — không có số liệu nào được bịa. File đầy đủ: `outputs/entity_resolution_audit.csv` (31 dòng).
 
 ---
 
@@ -34,15 +45,17 @@
 > **Đặc trưng đồ thị & Cắt tỉa cạnh:** Top 3 thực thể có bậc (degree) cao nhất trong đồ thị là gì? Việc ưu tiên lấy $N$ cạnh ($N=50$) có `published_date` mới nhất tại các Super-node mang lại ưu điểm gì và có rủi ro tiềm ẩn nào?
 
 *Trả lời:*
-- **Top 3 Super-nodes:**
+- **Top 3 Super-nodes** (Cypher `MATCH (n:Entity)-[r]-() RETURN n.name, n.entity_type, count(r) ORDER BY count(r) DESC LIMIT 3`, chạy trực tiếp trên Neo4j AuraDB — 121 nodes / 69 edges hiện có):
 
 | Hạng | Tên thực thể | Loại thực thể (Type) | Bậc kết nối (Degree) |
 |------|--------------|---------------------|----------------------|
-| 1 | *(đang chờ `test_supernode_policy()`)* | | |
-| 2 | | | |
-| 3 | | | |
+| 1 | Microsoft | Company | 4 |
+| 2 | Ericsson | Company | 3 |
+| 3 | Dubai Electricity and Water Authority | Company | 3 |
 
-> ⏳ Bảng trên đang được điền từ Cypher `MATCH (n)-[r]-() RETURN n.name, count(r) ORDER BY count(r) DESC LIMIT 3` chạy trong `test_supernode_policy()` (cell 5.1). Ghi nhận nhanh: trên toàn bộ 50 câu Golden benchmark, cột `graph_supernode_events` trong `graphrag_eval_results.csv` bằng **0 cho mọi câu** — nghĩa là với quy mô đồ thị hiện tại (`EXTRACTION_MAX_CHUNKS=400`), **không có node nào thực sự vượt ngưỡng `degree > 100`** để kích hoạt cơ chế cắt tỉa trong lúc trả lời Golden Dataset. Cơ chế Super-node Mitigation vẫn hoạt động đúng (đã unit-test qua `test_supernode_policy()`) nhưng chưa bị "kiểm thử áp lực" thật ở quy mô dữ liệu lab hiện tại.
+  *(Đồng hạng 3 còn có `Intelligent Technical Solutions`, degree cũng = 3.)*
+
+- **Ghi nhận về quy mô:** Trên toàn bộ 50 câu Golden benchmark, cột `graph_supernode_events` trong `graphrag_eval_results.csv` bằng **0 cho mọi câu** — nghĩa là với quy mô đồ thị hiện tại (`EXTRACTION_MAX_CHUNKS=400` → 121 node/69 edge thật), **không có node nào thực sự vượt ngưỡng `degree > 100`** để kích hoạt cơ chế cắt tỉa trong lúc trả lời Golden Dataset (degree cao nhất quan sát được chỉ là 4). Cơ chế Super-node Mitigation đúng theo code (`retrieve_graph_context()` giới hạn `LIMIT 50` khi `degree > 100`) nhưng chưa bị "kiểm thử áp lực" thật ở quy mô dữ liệu lab hiện tại — cần dataset lớn hơn nhiều (gần với 350MB full-scale, mục 5) để một hub thực sự vượt ngưỡng 100.
 
 - **Ưu điểm & Rủi ro của Temporal Mitigation (ưu tiên 50 cạnh mới nhất theo `published_date`):**
   - *Ưu điểm:* Giữ `MAX_GRAPH_CONTEXT_CHARS`/`GLOBAL_EDGE_CAP` trong tầm kiểm soát, tránh bùng nổ token khi traverse qua các hub lớn (Microsoft, Google...); ưu tiên tin tức mới nhất phù hợp với bản chất "breaking news" của domain tech-news, nơi trạng thái sự kiện (deal đang đàm phán → đã hoàn tất) thay đổi theo thời gian.
