@@ -1,0 +1,9 @@
+id,group,route,missing_before
+G5000-01,multi-hop,hop3,Information on which specific Ericsson businesses were transferred to Aeris and the scale of IoT connectivity attributed to the resulting Aeris footprint.
+G5000-02,cross-doc,hop3,"The context lacks details on whether the first two reports described a completed acquisition or a planned transfer, and it does not provide later evidence that changes the event state."
+G5000-04,cross-doc,hop2,
+G5000-05,multi-hop,hop3+vector,"Please provide more information about the question, such as the specific acquirer, reported IoT reach, and the desired path to find the answer."
+G5000-06,multi-hop,hop3+vector,"Context is not sufficient to answer the question as it only covers information up to July 2023, but the question asks for details from May through July 2023. Additional context is needed to provide a complete answer."
+G5000-07,cross-doc,hop3+vector,The provided context does not include specific details about the differences between ServiceNow's July generative-AI expansion in platform features and its ecosystem program with NVIDIA and Accenture. Additional information is missing to answer the question faithfully.
+G5000-08,multi-hop,hop3+vector,The provided context does not include information about external organizations connected to ServiceNow's generative-AI efforts or the distinct roles they play. More information is needed to answer the question faithfully.
+G5000-09,cross-doc,hop3+vector,More information is needed to answer the question about the core event and capability for a deduplicated graph in the context of Now Assist for Virtual Agent.

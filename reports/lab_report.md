@@ -105,6 +105,33 @@ Dữ liệu dưới đây được tính trực tiếp từ `outputs/graphrag_ev
 
 ---
 
+## 🎁 BONUS (đã triển khai và chạy thật)
+
+### B. Global Search via Community Reports (+5)
+- `build_communities()` (NetworkX `greedy_modularity_communities` trên toàn bộ 71 cạnh từ Neo4j) phát hiện **53 community** trên 121 node (kích thước 2–7 thành viên/cụm — đồ thị lab quy mô nhỏ nên cụm cũng nhỏ, ví dụ "Technology and Utility Community" (7 thành viên), "IoT Accelerator Community Overview" (4), "Samsung Electronics' Analog and Logic Semiconductor Technologies" (3)...).
+- Mỗi community được LLM tóm tắt thành 1 report ngắn (`community_reports_df`, 53 dòng, title + summary + danh sách entity) — `summarize_community()`.
+- **Hạn chế quan sát được (trung thực, không giấu):** Bước tóm tắt 53 community tốn khá nhiều token, khiến 3/6 model trong chain lại cạn TPD giữa chừng (giống sự cố ở mục M4/M5). Câu trả lời demo cho global query cuối cùng phải rơi xuống model `groq/compound` (agentic, tự ý dùng tool nội bộ) và **trả lời lạc đề** so với câu hỏi gốc — cho thấy Global Search phụ thuộc nhiều vào model chất lượng cao đang rảnh quota, một rủi ro thực tế cần tính đến khi scale (mục 5 Phần 1).
+
+### C. Self-Correction Graph Retrieval (+5)
+- `self_correcting_context()` (đã có sẵn khung trong notebook) — chạy demo định lượng trên 8 câu multi-hop/cross-doc lấy từ Golden Dataset (`outputs/self_correction_demo.csv`):
+
+| Route | Số câu | Tỉ lệ |
+|---|---|---|
+| `hop2` (đủ ngay ở hop 2) | 1/8 | 12.5% |
+| `hop3` (phải mở rộng lên hop 3) | 2/8 | 25% |
+| `hop3+vector` (vẫn thiếu, fallback sang Flat RAG) | 5/8 | 62.5% |
+
+  **Phát hiện quan trọng:** Với đồ thị hiện tại (chỉ 400/6000+ chunk được extract), **62.5% câu multi-hop/cross-doc không đủ context dù đã mở rộng tới hop 3** và phải trộn thêm Vector context — số liệu này củng cố trực tiếp nhận định ở mục 4 Phần 1 (GraphRAG thua Flat RAG về Comprehensiveness do đồ thị thưa, không phải do lỗi kiến trúc retrieval).
+
+### D. Near-Dedup (+3, thay cho AI Coding Agent Challenge A)
+- Dùng **Embedding (`all-MiniLM-L6-v2`) + FAISS `IndexHNSWFlat`** (ANN thật, sub-linear, không phải pairwise cosine `O(N²)` bị cấm) trên toàn bộ 5000 bài đã qua exact-dedup.
+- **Threshold:** `0.97` cosine similarity (ưu tiên precision cao, giảm false positive trên văn bản tin tức ngắn).
+- **Kết quả:** phát hiện **113 cặp near-duplicate**, gộp thành **68 cluster** — ví dụ điển hình: 2 bài cùng tiêu đề "Esri Signs Agreement with Malta Providing Access to GIS Technology Training" (sim=1.000) và 1 cặp bị cắt title khác nhau "Amazon launches test satellites for its planned internet service" vs "...to compete with [...]" (sim=0.970, đúng là cùng 1 bài, title bị truncate khác).
+- **False positive:** kiểm tra thủ công 3 cặp similarity thấp nhất (biên ngưỡng, dễ false positive nhất) — cả 3 đều là near-dup **thật** (cùng bài, khác cách cắt/định dạng title), không phát hiện false positive nào trong mẫu audit này ở threshold=0.97.
+- **⚠️ Bài học debug quan trọng (đáng đưa vào mục 2 Phần 2):** Lần chạy đầu tiên dùng `faiss.IndexHNSWFlat(dim, M)` mặc định — cho ra `similarity=1.58` (vượt quá 1.0, vô lý về mặt toán học với cosine đã normalize) và các cặp hoàn toàn không liên quan (ví dụ "Pokemon GO" ghép với "trẻ mất tích ở Ohio"). Nguyên nhân: `IndexHNSWFlat` mặc định dùng **khoảng cách L2**, không phải Inner Product/cosine — phải chỉ định tường minh `faiss.METRIC_INNER_PRODUCT`. Bug này chỉ lộ ra nhờ tự audit số liệu (similarity > 1.0 là dấu hiệu cảnh báo rõ ràng) trước khi báo cáo, không phải nhờ code tự báo lỗi.
+
+---
+
 ## 📌 PHẦN 2: SUY NGẪM & KẾ HOẠCH ĐỒ ÁN (Reflection & Action Plan)
 
 ### 1. Mapping Bài giảng vào Code
